@@ -26,7 +26,7 @@ class DetectorExample_LUX_RUN03 : public VDetector {
   // Do here the initialization of all the parameters that are not varying as a
   // function of time
   void Initialization() override {
-    name = "LUX Run03"
+    name = "LUX Run03";
     // Primary Scintillation (S1) parameters
     g1 = 0.1170;    // 0.117+/-0.003 WS,0.115+/-0.005 D-D,0.115+/-0.005
                     // CH3T,0.119+/-0.001 LUXSim. UNITS: phd per photon (NOT
