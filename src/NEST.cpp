@@ -41,7 +41,7 @@ NESTresult NESTcalc::FullCalculation(INTERACTION_TYPE species, double energy,
 }
 
 double NESTcalc::PhotonTime(INTERACTION_TYPE species, bool exciton,
-                            double dfield, double energy) {
+    double dfield, double energy, double tripERavg, double tripERerr) {
   double time_ns = 0., SingTripRatio = 0., tauR = 0.,
     tau3 = RandomGen::rndm()->rand_gauss(24.,1.,true),  // error from weighted average
     tau1 = RandomGen::rndm()->rand_gauss(3.1,.7,true);  // ibid.
@@ -86,8 +86,8 @@ double NESTcalc::PhotonTime(INTERACTION_TYPE species, bool exciton,
           pow(energy,
               0.416);  // spans 2.3 (alpha) and 7.8 (Cf in Xe) from NEST v1
     } else {  // ER
-      tau3 = RandomGen::rndm()->rand_gauss(25.89,0.06,true); //arXiv:1802.06162
-      tau1 = RandomGen::rndm()->rand_gauss( 3.27,0.66,true); //arXiv:1802.06162
+      tau3 = RandomGen::rndm()->rand_gauss(tripERavg,tripERerr,true);//1802.06162
+      tau1 = RandomGen::rndm()->rand_gauss(3.27,0.66,true); //arXiv:1802.06162
       if (!exciton) {
         if (energy > 1e3)
           energy = 1e3;  // MIP above ~1 MeV. Fix thanks to Austin de St. Croix

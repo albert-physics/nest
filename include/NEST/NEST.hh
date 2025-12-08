@@ -227,8 +227,9 @@ class NESTcalc {
                   // individual functions/calculations below
 
   double PhotonTime(
-      INTERACTION_TYPE species, bool exciton, double dfield,
-      double energy);  // gives you the birth times of S1 as well as S2
+      INTERACTION_TYPE species, bool exciton, double dfield, double energy,
+      double tripERavg = 25.89, double tripERerr = 0.06);
+  // gives you the birth times of S1 as well as S2
                        // scintillation photons, taking singlet, triplet, and
                        // recombination times into account, depending on
                        // particle, energy, field
