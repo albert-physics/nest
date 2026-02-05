@@ -83,6 +83,6 @@ NESTObservableArray runNESTvec(VDetector* detector,
                                std::vector<double> NRYieldsParam = default_NRYieldsParam,
                                std::vector<double> NRERWidthsParam = default_NRERWidthsParam,
                                S1CalculationMode s1mode = NEST::S1CalculationMode::Full,
-                               S2CalculationMode s2mode = NEST::S2CalculationMode::Full);
-
+                               S2CalculationMode s2mode = NEST::S2CalculationMode::Full,
+                               bool calculate_times = false);
 #endif

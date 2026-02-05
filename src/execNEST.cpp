@@ -337,9 +337,9 @@ NESTObservableArray runNESTvec(
     std::vector<double> NRYieldsParam,
     std::vector<double> NRERWidthsParam,
     S1CalculationMode s1mode,
-    S2CalculationMode s2mode
+    S2CalculationMode s2mode,
+    bool calculate_times
   ) {
-  verbosity = -1;
   NESTcalc calc(detector);
 
   RandomGen::rndm()->SetSeed(seed);
@@ -349,7 +349,7 @@ NESTObservableArray runNESTvec(
   std::vector<int64_t> s1_wf_time;
   std::vector<int64_t> s2_wf_time;
 
-  std::vector<double> g2_params = calc.CalculateG2(verbosity);
+    std::vector<double> g2_params = calc.CalculateG2(0); // 0 remove's unneeded details for SE
   double rho = calc.SetDensity(detector->get_T_Kelvin(), detector->get_p_bar());
 
   auto OutputResults = NESTObservableArray();
@@ -376,23 +376,31 @@ NESTObservableArray runNESTvec(
     // photons and electrons realeased for a given interaction
     NESTresult result = calc.FullCalculation(
         particleType, eList[i], rho, useField, detector->get_molarMass(),
-        ATOM_NUM, NRYieldsParam, NRERWidthsParam, ERYieldsParam, verbosity);
+        ATOM_NUM, NRYieldsParam, NRERWidthsParam, ERYieldsParam, calculate_times);
     double vD = calc.SetDriftVelocity(detector->get_T_Kelvin(), rho, useField, detector->get_p_bar());
 
     // vD,vDmiddle assumed same (uniform field)
     double driftTime = (detector->get_TopDrift() - truthPos[2]) / vD;
 
     // Here we simulate the detector response to estimate the detected S1
+    int s1_output_timings = -1; // We don't want to export the timings to disk
     std::vector<double> s1 = calc.GetS1(result.quanta, truthPos[0], truthPos[1], truthPos[2], smearPos[0],
                     smearPos[1], smearPos[2], vD, vD, particleType, i, useField,
-                    eList[i], s1mode, verbosity, s1_wf_time,
+                    eList[i], s1mode, s1_output_timings, s1_wf_time,
                     s1_wf_amp);
 
     // Here we simulate the detector response to estimate the detected S2
+    int s2_output_timings = -1; // We don't want to export the timings to disk
     std::vector<double> s2 = calc.GetS2(result.quanta.electrons, truthPos[0], truthPos[1], truthPos[2],
                      smearPos[0], smearPos[1], smearPos[2], driftTime, vD, i,
-                     useField, s2mode, verbosity, s2_wf_time,
+                     useField, s2mode, s2_output_timings, s2_wf_time,
                      s2_wf_amp, g2_params);
+
+    // FullCalculation will still store a vector of zeros in photon_times event when not requested
+    // Setting to an empty vector to save memory
+    if (not calculate_times){
+      result.photon_times = {};
+    }
 
     OutputResults.store_signals(eList[i], truthPos, result, s1, s2, s1_wf_time, s1_wf_amp, s2_wf_time, s2_wf_amp);
   }
