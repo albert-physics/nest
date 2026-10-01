@@ -1,10 +1,46 @@
 #include "NESTObservableArray.hh"
 
+#include <algorithm>
 #include <cstdlib>
 #include <iterator>
+#include <stdexcept>
 #include <utility>
 
 namespace {
+// Call f once per field, passing that field of each array. Every per-event
+// field must be listed here; the methods below all go through this list.
+template <typename F, typename... Arrays>
+void for_each_field(F&& f, Arrays&&... arrays) {
+  f(std::forward<Arrays>(arrays).energy_kev...);
+  f(std::forward<Arrays>(arrays).x_mm...);
+  f(std::forward<Arrays>(arrays).y_mm...);
+  f(std::forward<Arrays>(arrays).z_mm...);
+  f(std::forward<Arrays>(arrays).n_electrons...);
+  f(std::forward<Arrays>(arrays).n_photons...);
+  f(std::forward<Arrays>(arrays).s1_nhits...);
+  f(std::forward<Arrays>(arrays).s1_nhits_dpe...);
+  f(std::forward<Arrays>(arrays).s1_nhits_thr...);
+  f(std::forward<Arrays>(arrays).s1r_phe...);
+  f(std::forward<Arrays>(arrays).s1c_phe...);
+  f(std::forward<Arrays>(arrays).s1r_phd...);
+  f(std::forward<Arrays>(arrays).s1c_phd...);
+  f(std::forward<Arrays>(arrays).s1r_spike...);
+  f(std::forward<Arrays>(arrays).s1c_spike...);
+  f(std::forward<Arrays>(arrays).s1_photon_times...);
+  f(std::forward<Arrays>(arrays).s2_Nee...);
+  f(std::forward<Arrays>(arrays).s2_Nph...);
+  f(std::forward<Arrays>(arrays).s2_nhits...);
+  f(std::forward<Arrays>(arrays).s2_nhits_dpe...);
+  f(std::forward<Arrays>(arrays).s2r_phe...);
+  f(std::forward<Arrays>(arrays).s2c_phe...);
+  f(std::forward<Arrays>(arrays).s2r_phd...);
+  f(std::forward<Arrays>(arrays).s2c_phd...);
+  f(std::forward<Arrays>(arrays).s1_waveform_time...);
+  f(std::forward<Arrays>(arrays).s1_waveform_amp...);
+  f(std::forward<Arrays>(arrays).s2_waveform_time...);
+  f(std::forward<Arrays>(arrays).s2_waveform_amp...);
+}
+
 template <typename T>
 void append_field(std::vector<T>& dst, const std::vector<T>& src) {
   dst.insert(dst.end(), src.begin(), src.end());
@@ -22,34 +58,9 @@ void append_field(std::vector<T>& dst, std::vector<T>&& src) {
 // Src is a const& (fields are copied) or an rvalue (fields are moved)
 template <typename Src>
 void append_all_fields(NESTObservableArray& dst, Src&& src) {
-  append_field(dst.energy_kev, std::forward<Src>(src).energy_kev);
-  append_field(dst.x_mm, std::forward<Src>(src).x_mm);
-  append_field(dst.y_mm, std::forward<Src>(src).y_mm);
-  append_field(dst.z_mm, std::forward<Src>(src).z_mm);
-  append_field(dst.n_electrons, std::forward<Src>(src).n_electrons);
-  append_field(dst.n_photons, std::forward<Src>(src).n_photons);
-  append_field(dst.s1_nhits, std::forward<Src>(src).s1_nhits);
-  append_field(dst.s1_nhits_dpe, std::forward<Src>(src).s1_nhits_dpe);
-  append_field(dst.s1_nhits_thr, std::forward<Src>(src).s1_nhits_thr);
-  append_field(dst.s1r_phe, std::forward<Src>(src).s1r_phe);
-  append_field(dst.s1c_phe, std::forward<Src>(src).s1c_phe);
-  append_field(dst.s1r_phd, std::forward<Src>(src).s1r_phd);
-  append_field(dst.s1c_phd, std::forward<Src>(src).s1c_phd);
-  append_field(dst.s1r_spike, std::forward<Src>(src).s1r_spike);
-  append_field(dst.s1c_spike, std::forward<Src>(src).s1c_spike);
-  append_field(dst.s1_photon_times, std::forward<Src>(src).s1_photon_times);
-  append_field(dst.s2_Nee, std::forward<Src>(src).s2_Nee);
-  append_field(dst.s2_Nph, std::forward<Src>(src).s2_Nph);
-  append_field(dst.s2_nhits, std::forward<Src>(src).s2_nhits);
-  append_field(dst.s2_nhits_dpe, std::forward<Src>(src).s2_nhits_dpe);
-  append_field(dst.s2r_phe, std::forward<Src>(src).s2r_phe);
-  append_field(dst.s2c_phe, std::forward<Src>(src).s2c_phe);
-  append_field(dst.s2r_phd, std::forward<Src>(src).s2r_phd);
-  append_field(dst.s2c_phd, std::forward<Src>(src).s2c_phd);
-  append_field(dst.s1_waveform_time, std::forward<Src>(src).s1_waveform_time);
-  append_field(dst.s1_waveform_amp, std::forward<Src>(src).s1_waveform_amp);
-  append_field(dst.s2_waveform_time, std::forward<Src>(src).s2_waveform_time);
-  append_field(dst.s2_waveform_amp, std::forward<Src>(src).s2_waveform_amp);
+  for_each_field(
+      [](auto& d, auto&& s) { append_field(d, std::forward<decltype(s)>(s)); },
+      dst, std::forward<Src>(src));
 }
 }  // namespace
 
@@ -67,6 +78,20 @@ NESTObservableArray& NESTObservableArray::operator+=(NESTObservableArray&& other
   if (&other == this) return *this += static_cast<const NESTObservableArray&>(other);
   append_all_fields(*this, std::move(other));
   return *this;
+}
+
+void NESTObservableArray::resize(std::size_t n_events) {
+  for_each_field([n_events](auto& field) { field.resize(n_events); }, *this);
+}
+
+void NESTObservableArray::assign_events(std::size_t offset, NESTObservableArray&& src) {
+  if (offset > size() or src.size() > size() - offset)
+    throw std::out_of_range("NESTObservableArray::assign_events: events do not fit");
+  // Only elements are written, never the vectors themselves, so concurrent
+  // calls on disjoint ranges are safe
+  for_each_field(
+      [offset](auto& d, auto& s) { std::move(s.begin(), s.end(), d.begin() + offset); },
+      *this, src);
 }
 
 // Method to store the results from simulating an S1 and an S2

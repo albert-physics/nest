@@ -29,6 +29,17 @@ class NESTObservableArray {
     NESTObservableArray& operator+=(const NESTObservableArray& other);
     NESTObservableArray& operator+=(NESTObservableArray&& other);
 
+    // Number of events stored
+    std::size_t size() const { return energy_kev.size(); }
+
+    // Resize every field to hold n_events (new events are value-initialised)
+    void resize(std::size_t n_events);
+
+    // Move the events of src into events [offset, offset + src.size()), which
+    // must already exist (see resize). Calls writing disjoint ranges may run
+    // concurrently from different threads.
+    void assign_events(std::size_t offset, NESTObservableArray&& src);
+
     // Truth
     std::vector<double> energy_kev;
     std::vector<double> x_mm;
