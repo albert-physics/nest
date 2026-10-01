@@ -196,6 +196,16 @@ class NESTcalc {
 
   static double nCr(double n, double r);
 
+  // Probability of meeting an S1 coincidence level of 3 or more, for an
+  // integer spike count of at most 10
+  double CoincidenceProb(int spike);
+
+  // CoincidenceProb's results for each spike count, cached because nCr is
+  // slow. Rebuilt whenever the detector's numPMTs or coinLevel change.
+  std::array<double, 11> coinProbTable{};
+  int coinProbNumPMTs = -1;
+  int coinProbLevel = -1;
+
   vector<vector<double>> photon_areas;
   vector<double> scintillation;  // return vector
   vector<double> newSpike;       // for re-doing spike counting more precisely

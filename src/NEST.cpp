@@ -1685,13 +1685,7 @@ const vector<double> &NESTcalc::GetS1(
       } else if (fdetector->get_coinLevel() == 2) {
         prob = 1. - pow((double)fdetector->get_numPMTs(), 1. - spike);
       } else {
-        double numer = 0., denom = 0.;
-        for (int i = spike; i > 0; --i) {
-          denom += nCr(fdetector->get_numPMTs(), i);
-          if (i >= fdetector->get_coinLevel())
-            numer += nCr(fdetector->get_numPMTs(), i);
-        }
-        prob = numer / denom;
+        prob = CoincidenceProb(static_cast<int>(spike));
       }  // end of case of coinLevel of 3 or higher
     }    // end of case of spike is equal to 9 or lower
   }      // the end of case of spike >= coinLevel
@@ -2260,6 +2254,32 @@ long double NESTcalc::Factorial(double x) { return tgammal(x + 1.); }
 
 double NESTcalc::nCr(double n, double r) {
   return Factorial(n) / (Factorial(r) * Factorial(n - r));
+}
+
+// Fraction of the ways to spread spike hits over numPMTs PMTs that reach
+// coinLevel distinct PMTs. Each nCr costs three long-double tgammal calls
+// (~1.4 us), and low-S1 events used to need up to 20 of them each. The result
+// depends only on the integer spike count (at most 10 here), numPMTs and
+// coinLevel, so every value is computed once with the original loop (results
+// are bit-identical) and looked up afterwards. This makes low-energy NR
+// simulation about twice as fast.
+double NESTcalc::CoincidenceProb(int spike) {
+  const int numPMTs = fdetector->get_numPMTs();
+  const int coinLevel = fdetector->get_coinLevel();
+  if (numPMTs != coinProbNumPMTs or coinLevel != coinProbLevel) {
+    coinProbTable[0] = 0.;
+    for (std::size_t s = 1; s < coinProbTable.size(); ++s) {
+      double numer = 0., denom = 0.;
+      for (int i = s; i > 0; --i) {
+        denom += nCr(numPMTs, i);
+        if (i >= coinLevel) numer += nCr(numPMTs, i);
+      }
+      coinProbTable[s] = numer / denom;
+    }
+    coinProbNumPMTs = numPMTs;
+    coinProbLevel = coinLevel;
+  }
+  return coinProbTable.at(spike);
 }
 
 const vector<double> &NESTcalc::GetSpike(int Nph, double dx, double dy,
