@@ -255,76 +255,6 @@ int main(int argc, char** argv) {
   return exec;
 }
 
-// Method to store the results from simulating an S1 and an S2
-void NESTObservableArray::store_signals(
-  double energy,
-  std::vector<double> pos,
-  NESTresult result,
-  std::vector<double> s1,
-  std::vector<double> s2,
-  std::vector<int64_t> s1_wf_time,
-  std::vector<double> s1_wf_amp,
-  std::vector<int64_t> s2_wf_time,
-  std::vector<double> s2_wf_amp
-){
-  // Handle truth
-  energy_kev.push_back(energy);
-  x_mm.push_back(pos[0]);
-  y_mm.push_back(pos[1]);
-  z_mm.push_back(pos[2]);
-
-  // Handle quanta
-  n_photons.push_back(result.quanta.photons);
-  n_electrons.push_back(result.quanta.electrons);
-  s1_photon_times.push_back(result.photon_times);
-
-  // Handle S1
-  // 
-  // MC-true integer hits in same OR different PMTs, NO double phe effect
-  s1_nhits.push_back(std::abs(int(s1[0]))); 
-  // MC-true integer hits WITH double phe effect (Nphe > nHits)
-  s1_nhits_dpe.push_back(std::abs(int(s1[1])));
-  // smeared DAQ pulse areas in phe, NO XYZ correction
-  s1r_phe.push_back(std::abs(s1[2])); 
-  // same as s1r_phe WITH XYZ correction
-  s1c_phe.push_back(std::abs(s1[3])); 
-  //  same as s1r_phe, adjusted/corrected *downward* for 2-PE effect (LUX phd units)
-  s1r_phd.push_back(std::abs(s1[4])); 
-  // same as s1r_phd, but XYZ-corrected
-  s1c_phd.push_back(std::abs(s1[5])); 
-  // spike count, NO XYZ correction
-  s1r_spike.push_back(std::abs(s1[6])); 
-  // spike count, WITH XYZ correction
-  s1c_spike.push_back(std::abs(s1[7]));   
-  // nHits post coincidence window and single PE eff!
-  s1_nhits_thr.push_back(std::abs(int(s1[8]))); 
-
-  // Handle S2
-  // 
-  // integer number of electrons unabsorbed in liquid then getting extracted
-  s2_Nee.push_back(std::abs(int(s2[0])));
-  // raw number of photons produced in the gas gap
-  s2_Nph.push_back(std::abs(int(s2[1])));  
-  // MC-true integer hits in same OR different PMTs, NO double phe effect
-  s2_nhits.push_back(std::abs(int(s2[2]))); 
-  // MC-true integer hits WITH double phe effect (Nphe > nHits)
-  s2_nhits_dpe.push_back(std::abs(int(s2[3]))); 
-  // smeared DAQ pulse areas in phe, NO XYZ correction
-  s2r_phe.push_back(std::abs(s2[4])); 
-  // same as s2r_phe WITH XYZ correction
-  s2c_phe.push_back(std::abs(s2[5])); 
-  // same as s2r_phe, adjusted/corrected *downward* for 2-PE effect (LUX phd units)
-  s2r_phd.push_back(std::abs(s2[6])); 
-  // same as s2r_phd, but XYZ-corrected
-  s2c_phd.push_back(std::abs(s2[7])); 
-
-  // Handle waveforms
-  s1_waveform_time.push_back(s1_wf_time);
-  s1_waveform_amp.push_back(s1_wf_amp);
-  s2_waveform_time.push_back(s2_wf_time);
-  s2_waveform_amp.push_back(s2_wf_amp);
-}
-
 // func suggested by Xin Xiang, PD Brown U. for RG, LZ
 NESTObservableArray runNESTvec(
     VDetector* detector,
@@ -332,7 +262,7 @@ NESTObservableArray runNESTvec(
     std::vector<double> eList,
     std::vector<vector<double>> pos3dxyz,
     double inField,
-    int seed,
+    uint64_t seed,
     std::vector<double> ERYieldsParam,
     std::vector<double> NRYieldsParam,
     std::vector<double> NRERWidthsParam,

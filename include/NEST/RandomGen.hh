@@ -8,9 +8,13 @@
 #include "xoroshiro.hh"
 #include "gcem.hpp"
 #include <cmath>
+#include <cstdint>
 #include <cstdlib>
 #include <random>
 #include <vector>
+
+// Bit-mixing hash used to turn a seed into generator state
+std::uint64_t splitmix64(std::uint64_t z);
 
 using namespace std;
 
@@ -56,7 +60,6 @@ class RandomGen {
   RandomGen() = default;        // private so that it cannot be manually called
   RandomGen(RandomGen const&);  // copy constructor is private
   void operator=(RandomGen const&);  // assignment operator is private
-  static RandomGen* m_pInstance;     // private class pointer instance
 };
 
 #endif

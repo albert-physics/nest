@@ -26,7 +26,9 @@ NESTresult NESTcalc::FullCalculation(INTERACTION_TYPE species, double energy,
                                      const std::vector<double> &NRERWidthsParam,
                                      const std::vector<double> &ERYieldsParam,
                                      bool do_times /*=true*/) {
-  if (density < 1.) fdetector->set_inGas(true);
+  // Only write when the value changes, so that threads sharing a detector
+  // (already configured by SetDensity) never write to it concurrently
+  if (density < 1. and not fdetector->get_inGas()) fdetector->set_inGas(true);
   NESTresult result;
   result.yields = GetYields(species, energy, density, dfield, A, Z,
                             NRYieldsParam, ERYieldsParam);
@@ -2290,7 +2292,8 @@ const vector<double> &NESTcalc::GetSpike(int Nph, double dx, double dy,
 double NESTcalc::SetDensity(double Kelvin, double bara) {
   bool inGas = false;
   double density = GetDensity(Kelvin, bara, inGas, 0);
-  fdetector->set_inGas(inGas);
+  // Only write when the value changes (see FullCalculation)
+  if (inGas != fdetector->get_inGas()) fdetector->set_inGas(inGas);
 
   return density;
 }

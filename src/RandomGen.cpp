@@ -4,13 +4,11 @@
 
 using namespace std;
 
-// Global static pointer used to ensure a single instance of the class.
-RandomGen* RandomGen::m_pInstance = nullptr;
-
-// Only allow one instance of class to be generated.
+// One instance per thread, so that threads never share generator state.
+// Each thread must be seeded separately via SetSeed.
 RandomGen* RandomGen::rndm() {
-  if (!m_pInstance) m_pInstance = new RandomGen;
-  return m_pInstance;
+  static thread_local RandomGen instance;
+  return &instance;
 }
 
 std::uint64_t splitmix64(std::uint64_t z) {

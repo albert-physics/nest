@@ -46,6 +46,7 @@ include(cmake/gcem.cmake)
 
 set(NEST_CORE_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/src/NEST.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/NESTObservableArray.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/src/RandomGen.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/src/TestSpectra.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/src/VDetector.cpp
@@ -57,6 +58,7 @@ set(NEST_CORE_SOURCES
 )
 set(NEST_CORE_HEADERS
   ${CMAKE_CURRENT_SOURCE_DIR}/include/NEST/NEST.hh
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/NEST/NESTObservableArray.hh
   ${CMAKE_CURRENT_SOURCE_DIR}/include/NEST/RandomGen.hh
   ${CMAKE_CURRENT_SOURCE_DIR}/include/NEST/TestSpectra.hh
   ${CMAKE_CURRENT_SOURCE_DIR}/include/Detectors/VDetector.hh
